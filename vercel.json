@@ -1,0 +1,9 @@
+{
+  "buildCommand": "cd .. && npm run build -w frontend && node ./vercel-deploy.js",
+  "framework": "vite",
+  "installCommand": "cd .. && npm install -w frontend",
+  "github": {
+    "autoJobCancelation": true,
+    "silent": true
+  }
+}
