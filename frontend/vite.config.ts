@@ -1,7 +1,6 @@
 import { defineConfig, UserConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import Pages from 'vite-plugin-pages';
-import Layouts from 'vite-plugin-vue-layouts';
 import Icons from 'unplugin-icons/vite';
 import IconsResolver from 'unplugin-icons/resolver';
 import Components from 'unplugin-vue-components/vite';
@@ -12,7 +11,7 @@ import {
   Vuetify3Resolver,
   VueUseDirectiveResolver
 } from 'unplugin-vue-components/resolvers';
-import visualizer from 'rollup-plugin-visualizer';
+import { visualizer } from 'rollup-plugin-visualizer';
 import virtual from '@rollup/plugin-virtual';
 import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
 import browserslist from 'browserslist';
@@ -20,11 +19,16 @@ import { browserslistToTargets } from 'lightningcss';
 import virtualModules from './scripts/virtual-modules';
 import { localeFilesFolder, srcRoot } from './scripts/paths';
 
+const is_stable = !Number(process.env.IS_STABLE);
+const commit_hash = is_stable && process.env.COMMIT_HASH;
+
 export default defineConfig(({ mode }): UserConfig => {
   const config: UserConfig = {
     appType: 'spa',
+    base: './',
+    cacheDir: '../node_modules/.cache/vite',
     define: {
-      __COMMIT_HASH__: JSON.stringify(process.env.COMMIT_HASH || '')
+      __COMMIT_HASH__: JSON.stringify(commit_hash)
     },
     plugins: [
       virtual(virtualModules),
@@ -74,10 +78,6 @@ export default defineConfig(({ mode }): UserConfig => {
           defineModel: true
         }
       }),
-      Layouts({
-        importMode: () => 'sync',
-        defaultLayout: 'default'
-      }),
       // This plugin allows to autoimport vue components
       Components({
         dts: './types/global/components.d.ts',
@@ -101,8 +101,6 @@ export default defineConfig(({ mode }): UserConfig => {
       }),
       VueI18nPlugin({
         runtimeOnly: true,
-        dropMessageCompiler: true,
-        jitCompilation: true,
         compositionOnly: true,
         fullInstall: false,
         forceStringify: true,

@@ -13,11 +13,11 @@
   "author": "jellyfin-vue Contributors (https://github.com/jellyfin/jellyfin-vue/graphs/contributors)",
   "workspaces": [
     "frontend",
-    "tauri"
+    "packaging/tauri"
   ],
   "engines": {
-    "node": ">=18.12.0 <19.0.0",
-    "npm": ">=8.19.2",
+    "node": ">=20.8.1 <21.0.0",
+    "npm": ">=10.1.0",
     "yarn": "Yarn is not supported. Please use NPM."
   }
 }

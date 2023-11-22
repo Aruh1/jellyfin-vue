@@ -21,7 +21,6 @@
       "axios",
       "@intlify/unplugin-vue-i18n/messages",
       "unplugin-icons/types/vue",
-      "vite-plugin-vue-layouts/client",
       "vite/client",
       "vuetify",
       "vue"
@@ -37,7 +36,6 @@
     "**/**/*.json",
     "types/**/*.d.ts",
     ".eslintrc.cjs",
-    "vue-i18n-extract.config.js",
     "vite.config.ts"
   ],
   "exclude": ["node_modules"]
