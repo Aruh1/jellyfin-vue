@@ -16,8 +16,7 @@
     "packaging/tauri"
   ],
   "engines": {
-    "node": ">=20.8.1 <21.0.0",
-    "npm": ">=10.1.0",
+    "node": ">=18.x",
     "yarn": "Yarn is not supported. Please use NPM."
   }
 }
