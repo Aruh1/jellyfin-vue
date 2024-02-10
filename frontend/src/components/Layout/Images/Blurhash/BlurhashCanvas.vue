@@ -10,13 +10,13 @@
 </template>
 
 <script lang="ts">
-import { shallowRef, ref, watch } from 'vue';
 import { wrap } from 'comlink';
+import { ref, shallowRef, watch } from 'vue';
 import BlurhashWorker from './BlurhashWorker?worker&inline';
-import { useRemote } from '@/composables/use-remote';
+import { remote } from '@/plugins/remote';
 
-const remote = useRemote();
 const worker = new BlurhashWorker();
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 const pixelWorker = wrap<typeof import('./BlurhashWorker')['default']>(worker);
 
 /**
@@ -28,7 +28,7 @@ watch(
     if (newVal === undefined) {
       await pixelWorker.clearCache();
     }
-  }
+  }, { flush: 'post' }
 );
 </script>
 

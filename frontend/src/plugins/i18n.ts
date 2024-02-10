@@ -6,13 +6,13 @@ import messages from '@intlify/unplugin-vue-i18n/messages';
  * See @/store/clientSettings to check where the current user language is initialised
  */
 
-const DEFAULT_LANGUAGE = 'en-US';
+const DEFAULT_LANGUAGE = 'en';
 
-const i18n = createI18n({
+export const vuePlugin = createI18n({
   fallbackLocale: DEFAULT_LANGUAGE,
   globalInjection: true,
   legacy: false,
   messages: messages
 });
 
-export default i18n;
+export const i18n = vuePlugin.global;

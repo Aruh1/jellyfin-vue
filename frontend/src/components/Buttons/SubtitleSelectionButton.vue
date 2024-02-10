@@ -38,15 +38,14 @@
 
 <script setup lang="ts">
 import { SubtitleDeliveryMethod } from '@jellyfin/sdk/lib/generated-client';
+import IMdiCheck from 'virtual:icons/mdi/check';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import IMdiCheck from 'virtual:icons/mdi/check';
-import { playbackManagerStore } from '@/store';
+import { playbackManager } from '@/store/playbackManager';
 
 const menuModel = defineModel<boolean>();
 
 const { t } = useI18n();
-const playbackManager = playbackManagerStore();
 
 const tracks = computed(() => {
   const subs = playbackManager.currentItemParsedSubtitleTracks;

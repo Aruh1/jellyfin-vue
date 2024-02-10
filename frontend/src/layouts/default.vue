@@ -1,9 +1,11 @@
 <template>
   <AppBar />
-  <NavigationDrawer :order="display.mobile.value ? -1 : undefined" />
+  <NavigationDrawer
+    :order="display.mobile.value ? -1 : undefined"
+    :drawer-items="drawerItems" />
   <VMain>
     <div class="pa-s">
-      <PageView />
+      <slot />
     </div>
   </VMain>
   <AudioControls />
@@ -15,33 +17,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, provide, onBeforeMount, onUnmounted } from 'vue';
+import type { BaseItemDto } from '@jellyfin/sdk/lib/generated-client';
+import { computed, onBeforeMount, onUnmounted, provide, ref, watch } from 'vue';
 import { useDisplay } from 'vuetify';
-import {
-  playbackManagerStore,
-  playerElementStore,
-  userLibrariesStore
-} from '@/store';
+import type { DrawerItem } from '@/components/Layout/Navigation/NavigationDrawer.vue';
+import { playbackManager } from '@/store/playbackManager';
+import { playerElement } from '@/store/playerElement';
+import { fetchIndexPage, getLibraryIcon } from '@/utils/items';
 
 const display = useDisplay();
-const userLibraries = userLibrariesStore();
 const navDrawer = ref(!display.mobile.value);
 
-const playbackManager = playbackManagerStore();
-const playerElement = playerElementStore();
+const { views } = await fetchIndexPage();
 
-/**
- * We block the navigation to the layout at login to improve UX, so content doesn't pop up or jumps while rendering the page.
- * The data fetched at logon is used for the entire lifecycle of the user session. Changing layouts
- * (which happens when going to the fullscreen playback pages, for example) and going back to this one doesn't block the navigation again,
- * since 'isReady' will be only set to false again at user logout.
- *
- * For the rest of the user's session lifecycle, data will be refetched when the user navigates to index.
- * Refer to the documentation added to the pages/index.vue for more information
- */
-if (!userLibraries.isReady) {
-  await userLibraries.refresh();
-}
+const drawerItems = computed<DrawerItem[]>(() => {
+  return (views.value ?? []).map((view: BaseItemDto) => {
+    return {
+      icon: getLibraryIcon(view.CollectionType),
+      title: view.Name ?? '',
+      to: `/library/${String(view.Id)}`
+    };
+  });
+});
 
 watch(display.mobile, () => {
   navDrawer.value = !display.mobile;

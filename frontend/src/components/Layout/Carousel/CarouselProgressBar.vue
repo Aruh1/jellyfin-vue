@@ -15,12 +15,15 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useDisplay } from 'vuetify';
-import { useResponsiveClasses } from '@/composables';
+import { useResponsiveClasses } from '@/composables/use-responsive-classes';
 
 const props = withDefaults(
   defineProps<{
     pages: number;
     currentIndex: number;
+    /**
+     * In milliseconds
+     */
     duration: number;
     paused: boolean;
     hoverable?: boolean;

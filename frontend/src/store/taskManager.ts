@@ -1,9 +1,10 @@
-import { RemovableRef, useStorage } from '@vueuse/core';
+import { useStorage, type RemovableRef } from '@vueuse/core';
 import { v4 } from 'uuid';
 import { watch } from 'vue';
-import { itemsStore } from '@/store';
+import { remote } from '@/plugins/remote';
+import { apiStore } from '@/store/api';
 import { mergeExcludingUnknown } from '@/utils/data-manipulation';
-import { useRemote } from '@/composables';
+import { isArray, isObj, isStr } from '@/utils/validation';
 
 /**
  * == INTERFACES AND TYPES ==
@@ -41,24 +42,23 @@ export interface TaskManagerState {
 }
 
 /**
- * == UTILITY VARIABLES ==
- */
-const storeKey = 'taskManager';
-
-/**
  * == CLASS CONSTRUCTOR ==
  */
 class TaskManagerStore {
   /**
+   * == UTILITY VARIABLES ==
+   */
+  private readonly _storeKey = 'taskManager';
+  /**
    * == STATE SECTION ==
    */
-  private _defaultState: TaskManagerState = {
+  private readonly _defaultState: TaskManagerState = {
     tasks: [],
     finishedTasksTimeout: 5000
   };
 
-  private _state: RemovableRef<TaskManagerState> = useStorage(
-    storeKey,
+  private readonly _state: RemovableRef<TaskManagerState> = useStorage(
+    this._storeKey,
     structuredClone(this._defaultState),
     sessionStorage,
     {
@@ -72,15 +72,15 @@ class TaskManagerStore {
   public get tasks(): typeof this._state.value.tasks {
     return this._state.value.tasks;
   }
-  public getTask = (id: string): RunningTask | undefined =>
+  public readonly getTask = (id: string): RunningTask | undefined =>
     this._state.value.tasks.find((payload) => payload.id === id);
   /**
    * == ACTIONS ==
    */
-  public startTask = (task: RunningTask): void => {
+  public readonly startTask = (task: RunningTask): void => {
     if (task.progress && (task.progress < 0 || task.progress > 100)) {
       throw new TypeError(
-        "[taskManager]: Progress can't be below 0 or above 100"
+        `[${this._storeKey}]: Progress can't be below 0 or above 100`
       );
     }
 
@@ -89,7 +89,7 @@ class TaskManagerStore {
     }
   };
 
-  public finishTask = (id: string): void => {
+  public readonly finishTask = (id: string): void => {
     const clearTask = (): void => {
       const taskIndex = this._state.value.tasks.findIndex(
         (task) => task.id === id
@@ -110,7 +110,7 @@ class TaskManagerStore {
     }
   };
 
-  public startConfigSync = (): string => {
+  public readonly startConfigSync = (): string => {
     const payload = {
       type: TaskType.ConfigSync,
       id: v4()
@@ -121,22 +121,20 @@ class TaskManagerStore {
     return payload.id;
   };
 
-  private _clear = (): void => {
+  private readonly _clear = (): void => {
     Object.assign(this._state.value, this._defaultState);
   };
 
   public constructor() {
-    const remote = useRemote();
-
     /**
      * Handle refresh progress update for library items
      */
     const refreshProgressAction = (type: string, data: object): void => {
       if (
         type === 'RefreshProgress' &&
-        'ItemId' in data &&
-        typeof data.ItemId === 'string' &&
-        'Progress' in data
+          'ItemId' in data &&
+          isStr(data.ItemId) &&
+          'Progress' in data
       ) {
         // TODO: Verify all the different tasks that this message may belong to - here we assume libraries.
 
@@ -148,7 +146,7 @@ class TaskManagerStore {
          * Usually when a running task is started somewhere else and the client is accssed later
          */
         if (taskPayload === undefined) {
-          const item = itemsStore().getItemById(data.ItemId);
+          const item = apiStore.getItemById(data.ItemId);
 
           if (item?.Id && item.Name) {
             this.startTask({
@@ -171,11 +169,11 @@ class TaskManagerStore {
     const libraryChangedAction = (type: string, data: object): void => {
       if (
         type === 'LibraryChanged' &&
-        'ItemsUpdated' in data &&
-        Array.isArray(data.ItemsUpdated)
+          'ItemsUpdated' in data &&
+          isArray(data.ItemsUpdated)
       ) {
         for (const id of data.ItemsUpdated) {
-          if (typeof id === 'string') {
+          if (isStr(id)) {
             this.finishTask(id);
           }
         }
@@ -183,15 +181,15 @@ class TaskManagerStore {
     };
 
     watch(
-      () => remote.socket.message,
+      remote.socket.message,
       () => {
-        if (!remote.socket.message) {
+        if (!remote.socket.message.value) {
           return;
         }
 
-        const { MessageType, Data } = remote.socket.message;
+        const { MessageType, Data } = remote.socket.message.value;
 
-        if (!Data || typeof Data !== 'object') {
+        if (!Data || !isObj(Data)) {
           return;
         }
 
@@ -206,11 +204,9 @@ class TaskManagerStore {
         if (!remote.auth.currentUser) {
           this._clear();
         }
-      }
+      }, { flush: 'post' }
     );
   }
 }
 
-const taskManager = new TaskManagerStore();
-
-export default taskManager;
+export const taskManager = new TaskManagerStore();

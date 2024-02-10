@@ -1,39 +1,38 @@
 {
-  "3DFormat": "3Dフォーマット",
   "NoMediaSourcesAvailable": "メディアソースなし",
+  "NoMediaStreamsAvailable": "選択したソースで利用可能なメディアストリームがありません",
   "accept": "許可する",
+  "access": "アクセス",
+  "accessToken": "アクセストークン",
+  "account": "アカウント",
+  "accountSettingsDescription": "ユーザー情報の変更",
+  "activity": "アクティビティ",
   "actor": "役者",
   "actors": "役者",
   "addNewPerson": "新しい役者を追加",
+  "addServer": "サーバーを追加",
+  "addToQueue": "キューに追加",
+  "addedToQueue": "キューに追加済み",
   "administrator": "管理者",
+  "administratorAccount": "管理者アカウント",
   "airPlayDevices": "AirPlayデバイス",
   "albums": "アルバム",
   "allLanguages": "全ての言語",
-  "alphabetically": "アルファベット順",
-  "appbar": {
-    "tasks": {
-      "configSync": "設定を同期中…",
-      "scanningItem": "「{item}」をスキャン中…"
-    },
-    "tooltips": {
-      "tasks": "実行中のタスク"
-    }
-  },
+  "allLibraries": "全てのライブラリにアクセス可能",
+  "allowRemoteAccess": "サーバーへのリモートアクセスを許可する",
+  "apiKeys": "APIキー",
+  "appName": "アプリ名",
+  "appVersion": "アプリバージョン",
   "architecture": "アーキテクチャ",
   "artist": "アーティスト",
   "artists": "アーティスト",
-  "aspectRatio": "アスペクト比",
   "audio": "オーディオ",
-  "audioCodecNotSupported": "音声コーデックがサポートされていない",
   "auto": "オートマティック",
   "badRequest": "リクエストが正しくありません。再試行してください",
   "books": "本",
-  "browserNotSupported": "お使いのブラウザはこのファイルの再生に対応していません。",
-  "buttons": {
-    "ok": "はい"
-  },
   "byArtist": "{artist}の曲",
   "cancel": "キャンセル",
+  "cast": "出演者",
   "castAndCrew": "キャストとスタッフ",
   "clipboardSuccess": "クリップボードにコピーされました",
   "collectionEmpty": "このコレクションは空です",
@@ -41,31 +40,33 @@
   "communityRating": "コミュウニティーの評価",
   "confirm": "確認する",
   "connect": "接続",
-  "continueListening": "聞き続ける",
-  "continueWatching": "見続ける",
+  "continueWatching": "続けて観る",
   "criticRating": "評論家の評価",
-  "darkModeToggle": "ダークモードの切り替え",
+  "currentPassword": "現在のパスワード",
   "dateAdded": "追加日",
   "datePlayed": "再生日付",
   "delete": "削除",
   "deleteItem": "メディアを削除する",
   "details": "詳細",
-  "dialog": {
-    "upNext": {
-      "nextItemPlayingIn": "開始まであと{time}",
-      "startNow": "今に再生する"
-    }
-  },
   "directing": "監督",
   "director": "監督",
   "disabled": "無効",
-  "episodeNumber": "第{episodeNumber}話",
-  "errors": {
-    "anErrorHappened": "エラーが発生しました",
-    "cantPlayItem": "このアイテムは再生できません",
-    "messages": {
-      "videoPlayerError": "深刻のエラーが発生しました。"
-    }
-  },
-  "genres": "ジャンル"
+  "disc": "ディスク",
+  "endsAt": "再生終了時間: {time}",
+  "filter": "フィルター",
+  "genres": "ジャンル",
+  "helpTranslate": "Jellyfinを自分の言語に翻訳する",
+  "language": "言語を選択",
+  "latestLibrary": "最新の{libraryName}",
+  "libraries": "メディア一覧",
+  "mediaInfo": "メディア情報",
+  "newPassword": "新しいパスワード",
+  "playCount": "再生回数",
+  "readTheDocumentation": "ドキュメント",
+  "releaseDate": "リリース日",
+  "reportAnIssue": "クライアントの問題を報告",
+  "search": "検索",
+  "title": "タイトル",
+  "viewDetails": "詳細を確認",
+  "youMayAlsoLike": "これに似たもの"
 }

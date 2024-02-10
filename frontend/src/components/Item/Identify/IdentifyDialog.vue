@@ -61,7 +61,7 @@
           </VCheckbox>
           <VDivider />
           <IdentifyResults
-            v-if="Array.isArray(searchResults) && searchResults.length > 0"
+            v-if="isArray(searchResults) && searchResults.length > 0"
             :items="searchResults"
             :item-type="item.Type"
             @select="applySelectedSearch" />
@@ -82,21 +82,24 @@
         color="primary"
         :loading="isLoading"
         @click="performSearch">
-        {{ t('search.name') }}
+        {{ t('search') }}
       </VBtn>
     </template>
   </GenericDialog>
 </template>
 
 <script setup lang="ts">
-import {
+import type {
   BaseItemDto,
   RemoteSearchResult
 } from '@jellyfin/sdk/lib/generated-client';
 import { getItemLookupApi } from '@jellyfin/sdk/lib/utils/api/item-lookup-api';
 import { computed, ref, toRaw } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useConfirmDialog, useRemote, useSnackbar } from '@/composables';
+import { useConfirmDialog } from '@/composables/use-confirm-dialog';
+import { useSnackbar } from '@/composables/use-snackbar';
+import { remote } from '@/plugins/remote';
+import { isArray, isStr } from '@/utils/validation';
 
 interface IdentifyField {
   key: string;
@@ -120,7 +123,6 @@ function close (): void {
 }
 
 const { t } = useI18n();
-const remote = useRemote();
 
 const availableProviders = (
   await remote.sdk.newUserApi(getItemLookupApi).getExternalIdInfos({
@@ -132,7 +134,7 @@ const model = ref(true);
 const isLoading = ref(false);
 const searchResults = ref<RemoteSearchResult[]>();
 const replaceImage = ref(false);
-const errorMessage = t('errors.anErrorHappened');
+const errorMessage = t('anErrorHappened');
 const searchFields = computed<IdentifyField[]>(() => {
   const result = [
     {
@@ -230,7 +232,6 @@ async function getItemRemoteSearch(
     ProviderIds: { [key: string]: string };
   }
 
-  const remote = useRemote();
   const searcher = remote.sdk.newUserApi(getItemLookupApi);
   const itemId = item.Id;
 
@@ -256,7 +257,7 @@ async function getItemRemoteSearch(
    */
   for (const field of fields) {
     const value =
-      typeof field.value === 'string' ? field.value.trim() : field.value;
+      isStr(field.value) ? field.value.trim() : field.value;
 
     if (field.key === 'search-name' && value) {
       searchQuery.Name = value;
@@ -370,7 +371,7 @@ async function performSearch(): Promise<void> {
   try {
     const results = await getItemRemoteSearch(props.item, fieldsInputs.value);
 
-    searchResults.value = Array.isArray(results) ? results : [];
+    searchResults.value = isArray(results) ? results : [];
   } catch (error) {
     console.error(error);
 

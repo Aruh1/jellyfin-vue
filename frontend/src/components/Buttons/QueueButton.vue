@@ -11,7 +11,6 @@
     <VMenu
       v-model="menuModel"
       :close-on-content-click="false"
-      :persistent="!closeOnClick"
       :transition="'slide-y-transition'"
       :width="listWidth"
       location="top">
@@ -31,7 +30,7 @@
             <template #subtitle>
               {{ getTotalEndsAtTime(playbackManager.queue).value }} -
               {{
-                $t('playback.queueItems', {
+                $t('queueItems', {
                   items: playbackManager.queue.length
                 })
               }}
@@ -51,7 +50,7 @@
               <IMdiPlaylistRemove />
             </VIcon>
             <VTooltip
-              :text="$t('playback.clearQueue')"
+              :text="$t('clearQueue')"
               location="top" />
           </VBtn>
           <VBtn
@@ -61,7 +60,7 @@
               <IMdiContentSave />
             </VIcon>
             <VTooltip
-              :text="$t('playback.saveAsPlaylist')"
+              :text="$t('saveAsPlaylist')"
               location="top" />
           </VBtn>
           <VSpacer />
@@ -72,35 +71,32 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useI18n } from 'vue-i18n';
-import IMdiShuffle from 'virtual:icons/mdi/shuffle';
 import IMdiPlaylistMusic from 'virtual:icons/mdi/playlist-music';
-import { playbackManagerStore } from '@/store';
-import { InitMode } from '@/store/playbackManager';
+import IMdiShuffle from 'virtual:icons/mdi/shuffle';
+import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { getTotalEndsAtTime } from '@/utils/time';
+import { InitMode, playbackManager } from '@/store/playbackManager';
 
 const props = withDefaults(
   defineProps<{
-    closeOnClick?: boolean;
     size?: number;
   }>(),
-  { closeOnClick: false, size: 40 }
+  { size: 40 }
 );
 
-const playbackManager = playbackManagerStore();
 const { t } = useI18n();
 
 const menuModel = ref(false);
 const listWidth = computed(() => `${props.size}vw`);
-// Const listHeight = computed(() => `${props.size}vh`);
+const listHeight = computed(() => `${props.size}vh`);
 
 const sourceText = computed(() => {
   /**
    * TODO: Properly refactor this once search and other missing features are implemented, as discussed in
    * https://github.com/jellyfin/jellyfin-vue/pull/609
    */
-  const unknownSource = t('playback.playbackSource.unknown');
+  const unknownSource = t('unknown');
 
   switch (playbackManager.playbackInitMode) {
     case InitMode.Unknown: {
@@ -109,18 +105,18 @@ const sourceText = computed(() => {
     case InitMode.Item: {
       return playbackManager.currentItem?.AlbumId ===
         playbackManager.initiator?.Id
-        ? t('playback.playbackSource.item', {
+        ? t('playingFrom', {
           item: playbackManager.initiator?.Name
         })
         : unknownSource;
     }
     case InitMode.Shuffle: {
-      return t('playback.playbackSource.shuffle');
+      return t('playinginShuffle');
     }
     case InitMode.ShuffleItem: {
       return playbackManager.currentItem?.AlbumId ===
         playbackManager.initiator?.Id
-        ? t('playback.playbackSource.shuffleItem', {
+        ? t('playingItemInShuffle', {
           item: playbackManager.initiator?.Name
         })
         : unknownSource;
@@ -139,14 +135,8 @@ const modeIcon = computed(() =>
 </script>
 
 <style lang="scss" scoped>
-/**
-For some reason, v-bind doesn't work with this, so we must manually update this
-if we ever want to change the size
-
-TODO: Investigate why
- */
 .queue-area {
-  min-height: 40vh;
-  max-height: 40vh;
+  min-height: v-bind(listHeight);
+  max-height: v-bind(listHeight);
 }
 </style>

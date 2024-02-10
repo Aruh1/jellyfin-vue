@@ -1,7 +1,5 @@
-import 'vue-router';
+import type en from '@/../locales/en.json';
 import type { RemotePlugin } from '@/plugins/remote/types';
-import enUS from '@/../locales/en-US.json';
-import 'vue-i18n';
 
 /**
  * The object that represents RouteMeta is defined at @/plugins/vue/router/middleware/meta
@@ -16,7 +14,7 @@ interface RouteTransition {
 }
 declare module 'vue-router' {
   interface RouteMeta {
-    readonly layout: string;
+    readonly layout: 'default' | 'fullpage' | 'server';
     transparentLayout?: boolean;
     transition?: RouteTransition;
     readonly admin: boolean;
@@ -32,7 +30,8 @@ declare module 'vue' {
 }
 
 declare module 'vue-i18n' {
-  type messages = typeof enUS;
+  type messages = typeof en;
+
   export interface DefineLocaleMessage extends messages {}
 }
 
@@ -41,4 +40,5 @@ declare module 'vue-i18n' {
  * https://www.typescriptlang.org/docs/handbook/modules.html
  */
 
-export {};
+export { };
+

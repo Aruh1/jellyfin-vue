@@ -8,7 +8,7 @@
         v-model="serverUrl"
         variant="outlined"
         autofocus
-        :label="$t('login.serverAddress')"
+        :label="$t('serverAddress')"
         type="url"
         :rules="rules" />
       <VRow
@@ -22,7 +22,7 @@
             size="large"
             variant="elevated"
             @click="router.push('/server/select')">
-            {{ $t('login.changeServer') }}
+            {{ $t('changeServer') }}
           </VBtn>
         </VCol>
         <VCol class="mr-2">
@@ -34,7 +34,7 @@
             color="primary"
             variant="elevated"
             type="submit">
-            {{ $t('login.connect') }}
+            {{ $t('connect') }}
           </VBtn>
         </VCol>
       </VRow>
@@ -44,11 +44,10 @@
 
 <script setup lang="ts">
 import { ref, unref } from 'vue';
-import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { useRemote } from '@/composables';
+import { useRouter } from 'vue-router/auto';
+import { remote } from '@/plugins/remote';
 
-const remote = useRemote();
 const router = useRouter();
 const i18n = useI18n();
 const valid = ref(false);
@@ -57,7 +56,7 @@ const serverUrl = ref('');
 const loading = ref(false);
 
 const rules = [
-  (v: string): boolean | string => !!v.trim() || i18n.t('validation.required')
+  (v: string): boolean | string => !!v.trim() || i18n.t('required')
 ];
 
 /**

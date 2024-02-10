@@ -2,7 +2,8 @@
   <VBtn
     icon
     :size="size"
-    @click="playbackManager.setPreviousTrack">
+    @click="() => playbackManager.setPreviousItem()"
+    @dblclick="() => playbackManager.setPreviousItem(true)">
     <VIcon :size="size">
       <IMdiSkipPrevious />
     </VIcon>
@@ -11,9 +12,7 @@
 
 <script setup lang="ts">
 import IMdiSkipPrevious from 'virtual:icons/mdi/skip-previous';
-import { playbackManagerStore } from '@/store';
+import { playbackManager } from '@/store/playbackManager';
 
 defineProps<{ size?: string }>();
-
-const playbackManager = playbackManagerStore();
 </script>

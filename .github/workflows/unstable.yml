@@ -55,7 +55,7 @@ jobs:
           context: .
           file: packaging/docker/Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64,linux/arm
+          platforms: linux/amd64,linux/arm64
           tags: |
             jellyfin/jellyfin-vue:unstable
             jellyfin/jellyfin-vue:unstable.${{ steps.date.outputs.date }}.${{ steps.sha.outputs.sha }}
@@ -69,8 +69,9 @@ jobs:
           docker rm jf
 
       - name: Upload artifact (Client) ⬆️💻
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v4.2.0
         with:
+          compression-level: 0
           name: frontend
           path: |
             dist
@@ -96,7 +97,7 @@ jobs:
           show-progress: false
 
       - name: Setup node environment ⚙️
-        uses: actions/setup-node@v4.0.0
+        uses: actions/setup-node@v4.0.1
         with:
           node-version: 20
           check-latest: true
@@ -114,26 +115,29 @@ jobs:
         run: npm run build
 
       - name: Upload artifact (Linux) ⬆️🐧
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v4.2.0
         if: matrix.platform == 'ubuntu-latest'
         with:
+          compression-level: 0
           name: jellyfin-vue_linux-amd64
           path: |
             packaging/tauri/target/release/bundle/deb/*.deb
             packaging/tauri/target/release/bundle/appimage_deb
 
       - name: Upload artifact (MacOS) ⬆️🍎
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v4.2.0
         if: matrix.platform == 'macos-latest'
         with:
+          compression-level: 0
           name: jellyfin-vue_macOS
           path: |
             packaging/tauri/target/release/bundle/macos
             packaging/tauri/target/release/bundle/dmg/*.dmg
 
       - name: Upload artifact (Windows) ⬆️🪟
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v4.2.0
         if: matrix.platform == 'windows-latest'
         with:
+          compression-level: 0
           name: jellyfin-vue_windows_amd64
           path: packaging/tauri/target/release/jellyfin-vue.exe

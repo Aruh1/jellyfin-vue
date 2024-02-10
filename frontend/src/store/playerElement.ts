@@ -4,16 +4,17 @@
  * In the other part, playbackManager is suited to handle the playback state in
  * an agnostic way, regardless of where the media is being played (remotely or locally)
  */
-import { isNil } from 'lodash-es';
-import { nextTick, reactive, watch } from 'vue';
 import JASSUB from 'jassub';
+import jassubDefaultFont from 'jassub/dist/default.woff2?url';
 import jassubWorker from 'jassub/dist/jassub-worker.js?url';
 import jassubWasmUrl from 'jassub/dist/jassub-worker.wasm?url';
-import jassubDefaultFont from 'jassub/dist/default.woff2?url';
-import { mediaElementRef, playbackManagerStore } from '@/store';
-import { useRemote, useRouter } from '@/composables';
+import { nextTick, reactive, watch } from 'vue';
+import { playbackManager } from './playbackManager';
+import { isArray, isNil } from '@/utils/validation';
+import { mediaElementRef } from '@/store';
+import { router } from '@/plugins/router';
+import { remote } from '@/plugins/remote';
 
-const playbackManager = playbackManagerStore();
 let jassub: JASSUB | undefined;
 const fullscreenVideoRoute = '/playback/video';
 const fullscreenMusicRoute = '/playback/music';
@@ -34,13 +35,13 @@ class PlayerElementStore {
   /**
    * == STATE SECTION ==
    */
-  private _defaultState: PlayerElementState = {
+  private readonly _defaultState: PlayerElementState = {
     isFullscreenMounted: false,
     isPiPMounted: false,
     isStretched: true
   };
 
-  private _state = reactive<PlayerElementState>(
+  private readonly _state = reactive<PlayerElementState>(
     structuredClone(this._defaultState)
   );
   /**
@@ -71,15 +72,13 @@ class PlayerElementStore {
   }
 
   public get isFullscreenVideoPlayer(): boolean {
-    return useRouter().currentRoute.value.fullPath === fullscreenVideoRoute;
+    return router.currentRoute.value.fullPath === fullscreenVideoRoute;
   }
 
   /**
    * == ACTIONS ==
    */
-  public toggleFullscreenVideoPlayer = async (): Promise<void> => {
-    const router = useRouter();
-
+  public readonly toggleFullscreenVideoPlayer = async (): Promise<void> => {
     if (this.isFullscreenVideoPlayer) {
       router.back();
     } else {
@@ -87,7 +86,7 @@ class PlayerElementStore {
     }
   };
 
-  private _setSsaTrack = (trackSrc: string, attachedFonts?: string[]): void => {
+  private readonly _setSsaTrack = (trackSrc: string, attachedFonts?: string[]): void => {
     if (
       !jassub &&
       mediaElementRef.value &&
@@ -105,7 +104,7 @@ class PlayerElementStore {
         onDemandRender: false
       });
     } else if (jassub) {
-      if (Array.isArray(attachedFonts)) {
+      if (isArray(attachedFonts)) {
         for (const font of attachedFonts) {
           jassub.addFont(font);
         }
@@ -115,7 +114,7 @@ class PlayerElementStore {
     }
   };
 
-  public freeSsaTrack = (): void => {
+  public readonly freeSsaTrack = (): void => {
     if (jassub) {
       try {
         jassub.destroy();
@@ -125,13 +124,13 @@ class PlayerElementStore {
     }
   };
 
-  private _isSupportedFont = (mimeType: string | undefined | null): boolean => {
+  private readonly _isSupportedFont = (mimeType: string | undefined | null): boolean => {
     return (
       !isNil(mimeType) &&
       mimeType.startsWith('font/') &&
       (mimeType.includes('ttf') ||
-        mimeType.includes('otf') ||
-        mimeType.includes('woff'))
+      mimeType.includes('otf') ||
+      mimeType.includes('woff'))
     );
   };
 
@@ -147,8 +146,7 @@ class PlayerElementStore {
    *
    * If embedded, a new transcode is automatically fetched from the playbackManager watchers.
    */
-  public applyCurrentSubtitle = async (): Promise<void> => {
-    const remote = useRemote();
+  public readonly applyCurrentSubtitle = async (): Promise<void> => {
     const serverAddress = remote.sdk.api?.basePath;
     /**
      * Finding (if it exists) the VTT or SSA track associated to the newly picked subtitle
@@ -200,13 +198,11 @@ class PlayerElementStore {
     }
   };
 
-  private _clear = (): void => {
+  private readonly _clear = (): void => {
     Object.assign(this._state, this._defaultState);
   };
 
   public constructor() {
-    const remote = useRemote();
-
     /**
      * * Move user to the fullscreen page when starting video playback by default
      * * Move user out of the fullscreen pages when playback is over
@@ -214,13 +210,12 @@ class PlayerElementStore {
     watch(
       () => playbackManager.currentItem,
       async (newValue, oldValue) => {
-        const router = useRouter();
         const currentFullPath = router.currentRoute.value.fullPath;
 
         if (
           !newValue &&
           (currentFullPath.includes(fullscreenMusicRoute) ||
-            currentFullPath.includes(fullscreenVideoRoute))
+          currentFullPath.includes(fullscreenVideoRoute))
         ) {
           router.back();
         } else if (
@@ -239,11 +234,9 @@ class PlayerElementStore {
         if (!remote.auth.currentUser) {
           this._clear();
         }
-      }
+      }, { flush: 'post' }
     );
   }
 }
 
-const playerElement = new PlayerElementStore();
-
-export default playerElement;
+export const playerElement = new PlayerElementStore();

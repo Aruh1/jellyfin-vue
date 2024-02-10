@@ -47,7 +47,7 @@
           <VTextField
             v-model="metadata.Name"
             variant="outlined"
-            :label="t('metadata.title')" />
+            :label="t('title')" />
           <VTextField
             v-model="metadata.OriginalTitle"
             variant="outlined"
@@ -213,21 +213,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { pick, set } from 'lodash-es';
-import { AxiosError } from 'axios';
 import {
-  BaseItemDto,
-  BaseItemPerson,
-  ImageType
+  ImageType,
+  type BaseItemDto,
+  type BaseItemPerson
 } from '@jellyfin/sdk/lib/generated-client';
-import { getLibraryApi } from '@jellyfin/sdk/lib/utils/api/library-api';
-import { getUserLibraryApi } from '@jellyfin/sdk/lib/utils/api/user-library-api';
 import { getGenresApi } from '@jellyfin/sdk/lib/utils/api/genres-api';
 import { getItemUpdateApi } from '@jellyfin/sdk/lib/utils/api/item-update-api';
+import { getLibraryApi } from '@jellyfin/sdk/lib/utils/api/library-api';
+import { getUserLibraryApi } from '@jellyfin/sdk/lib/utils/api/user-library-api';
+import { AxiosError } from 'axios';
 import { format, formatISO } from 'date-fns';
-import { useDateFns, useRemote, useSnackbar } from '@/composables';
+import { pick, set } from 'lodash-es';
+import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { isArray } from '@/utils/validation';
+import { remote } from '@/plugins/remote';
+import { useSnackbar } from '@/composables/use-snackbar';
+import { useDateFns } from '@/composables/use-datefns';
 
 type ContentOption = {
   value: string;
@@ -243,7 +246,6 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const remote = useRemote();
 
 const metadata = ref<BaseItemDto>();
 const menu = ref(false);
@@ -259,7 +261,7 @@ const genresModel = computed({
     return metadata.value?.Genres === null ? undefined : metadata.value?.Genres;
   },
   set(newVal) {
-    if (Array.isArray(newVal) && metadata.value) {
+    if (isArray(newVal) && metadata.value) {
       metadata.value.Genres = newVal;
     }
   }
@@ -269,7 +271,7 @@ const tagsModel = computed({
     return metadata.value?.Tags === null ? undefined : metadata.value?.Tags;
   },
   set(newVal) {
-    if (Array.isArray(newVal) && metadata.value) {
+    if (isArray(newVal) && metadata.value) {
       metadata.value.Tags = newVal;
     }
   }
@@ -280,8 +282,7 @@ const premiereDate = computed(() => {
     return '';
   }
 
-  return useDateFns(format, new Date(metadata.value.PremiereDate), 'yyyy-MM-dd')
-    .value;
+  return useDateFns(format, new Date(metadata.value.PremiereDate), 'yyyy-MM-dd');
 });
 
 const dateCreated = computed(() => {
@@ -289,8 +290,7 @@ const dateCreated = computed(() => {
     return '';
   }
 
-  return useDateFns(format, new Date(metadata.value.DateCreated), 'yyyy-MM-dd')
-    .value;
+  return useDateFns(format, new Date(metadata.value.DateCreated), 'yyyy-MM-dd');
 });
 
 const tagLine = computed({

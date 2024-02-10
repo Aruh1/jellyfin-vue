@@ -3,7 +3,7 @@
     <template
       v-for="(item, index) of playbackManager.queue"
       :key="item.Id">
-      <VHover v-slot="{ isHovering, props: hoverProps }">
+      <JHover v-slot="{ isHovering, hoverProps }">
         <VListItem
           v-bind="hoverProps"
           :title="item.Name ?? ''"
@@ -36,20 +36,20 @@
               queue />
           </template>
         </VListItem>
-      </VHover>
+      </JHover>
     </template>
   </span>
 </template>
 
 <script setup lang="ts">
+import type { BaseItemDto } from '@jellyfin/sdk/lib/generated-client';
 import Sortable from 'sortablejs';
-import { BaseItemDto } from '@jellyfin/sdk/lib/generated-client';
 import { onBeforeUnmount, shallowRef, watch } from 'vue';
-import { playbackManagerStore } from '@/store';
+import { isNumber } from '@/utils/validation';
+import { playbackManager } from '@/store/playbackManager';
 
 let sortable: Sortable | undefined;
 const container = shallowRef<HTMLSpanElement>();
-const playbackManager = playbackManagerStore();
 
 /**
  * Destroys the sortable instance
@@ -86,10 +86,10 @@ watch(container, () => {
       onUpdate(e): void {
         const oldIndex = e.oldIndex;
 
-        if (typeof oldIndex === 'number') {
+        if (isNumber(oldIndex)) {
           const item = playbackManager.queue[oldIndex];
 
-          if (item?.Id && typeof e.newIndex === 'number') {
+          if (item?.Id && isNumber(e.newIndex)) {
             playbackManager.changeItemPosition(item.Id, e.newIndex);
           }
         }

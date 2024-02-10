@@ -3,7 +3,7 @@
     v-model="drawer"
     :temporary="$vuetify.display.mobile"
     :permanent="!$vuetify.display.mobile"
-    :order="props.order"
+    :order="order"
     floating
     class="pa-s"
     :color="
@@ -37,37 +37,31 @@
 </template>
 
 <script setup lang="ts">
-import { BaseItemDto } from '@jellyfin/sdk/lib/generated-client';
-import { useRoute } from 'vue-router';
-import { useI18n } from 'vue-i18n';
-import { computed, inject, Ref } from 'vue';
 import IMdiHome from 'virtual:icons/mdi/home';
-import { userLibrariesStore } from '@/store';
-import { getLibraryIcon } from '@/utils/items';
+import { computed, inject, type Ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRoute } from 'vue-router/auto';
+import type { RouteNamedMap } from 'vue-router/auto/routes';
+import type { getLibraryIcon } from '@/utils/items';
 
-const props = defineProps<{
+export interface DrawerItem {
+  icon: ReturnType<typeof getLibraryIcon>;
+  title: string;
+  to: keyof RouteNamedMap;
+}
+
+defineProps<{
   order?: number;
+  drawerItems: DrawerItem[];
 }>();
+
 const route = useRoute();
-const userLibraries = userLibrariesStore();
 const { t } = useI18n();
 
 const drawer = inject<Ref<boolean>>('NavigationDrawer');
 
 const transparentLayout = computed(() => {
   return route.meta.transparentLayout ?? false;
-});
-
-const drawerItems = computed(() => {
-  return userLibraries.libraries.map((view: BaseItemDto) => {
-    if (view.Id) {
-      return {
-        icon: getLibraryIcon(view.CollectionType),
-        title: view.Name ?? '',
-        to: `/library/${view.Id}`
-      };
-    }
-  });
 });
 
 const items = [

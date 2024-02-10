@@ -1,25 +1,19 @@
-import { useStorage } from '@vueuse/core';
-import { UserDto } from '@jellyfin/sdk/lib/generated-client';
+import {
+  API_VERSION,
+  VersionOutdatedIssue,
+  VersionUnsupportedIssue
+} from '@jellyfin/sdk';
+import type { UserDto } from '@jellyfin/sdk/lib/generated-client';
 import { getSystemApi } from '@jellyfin/sdk/lib/utils/api/system-api';
 import { getUserApi } from '@jellyfin/sdk/lib/utils/api/user-api';
-import { isNil, merge } from 'lodash-es';
-import { AxiosError } from 'axios';
-import {
-  VersionOutdatedIssue,
-  VersionUnsupportedIssue,
-  API_VERSION
-} from '@jellyfin/sdk';
+import { useStorage } from '@vueuse/core';
+import { merge } from 'lodash-es';
 import SDK, { useOneTimeAPI } from '../sdk/sdk-utils';
 import type { AuthState, ServerInfo } from './types';
-import { usei18n, useSnackbar, useRouter } from '@/composables';
+import { isAxiosError, isNil } from '@/utils/validation';
 import { mergeExcludingUnknown } from '@/utils/data-manipulation';
-
-/**
- * TypeScript type guard for AxiosError
- */
-function isAxiosError(object: unknown): object is AxiosError {
-  return !!(object && typeof object === 'object' && 'isAxiosError' in object);
-}
+import { i18n } from '@/plugins/i18n';
+import { useSnackbar } from '@/composables/use-snackbar';
 
 class RemotePluginAuth {
   /**
@@ -85,7 +79,7 @@ class RemotePluginAuth {
   };
 
   /**
-   * Methods
+   * == METHODS ==
    */
   /**
    * Adds or refresh the information of a server
@@ -118,8 +112,7 @@ class RemotePluginAuth {
     serverUrl: string,
     isDefault = false
   ): Promise<void> {
-    const { t } = usei18n();
-    const router = useRouter();
+    const { t } = i18n;
 
     serverUrl = serverUrl.replace(/\/$/, '').trim();
 
@@ -157,18 +150,14 @@ class RemotePluginAuth {
           isDefault: isDefault
         };
 
-        if (serv.StartupWizardCompleted) {
-          this._state.value.currentServerIndex = this._addOrRefreshServer(serv);
-        } else {
-          await router.push({ path: '/wizard' });
-        }
+        this._state.value.currentServerIndex = this._addOrRefreshServer(serv);
       } catch (error) {
-        useSnackbar(t('errors.anErrorHappened'), 'error');
+        useSnackbar(t('anErrorHappened'), 'error');
         console.error(error);
         throw error;
       }
     } else {
-      useSnackbar(t('login.serverNotFound'), 'error');
+      useSnackbar(t('serverNotFound'), 'error');
     }
   }
 
@@ -205,11 +194,11 @@ class RemotePluginAuth {
       }
     } catch (error: unknown) {
       if (isAxiosError(error)) {
-        const { t } = usei18n();
-        let errorMessage = 'unexpectedError';
+        const { t } = i18n;
+        let errorMessage = t('unexpectedError');
 
         if (!error.response) {
-          errorMessage = error.message || t('login.serverNotFound');
+          errorMessage = error.message || t('serverNotFound');
         } else if (
           error.response.status === 500 ||
           error.response.status === 401
@@ -220,6 +209,7 @@ class RemotePluginAuth {
         }
 
         useSnackbar(errorMessage, 'error');
+        throw error;
       }
     }
   }

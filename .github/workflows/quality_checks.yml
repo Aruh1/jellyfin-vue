@@ -8,6 +8,7 @@ on:
   pull_request:
     paths-ignore:
       - "**/*.md"
+  merge_group:
   schedule:
     - cron: "30 7 * * 6"
   workflow_dispatch:
@@ -23,7 +24,12 @@ jobs:
           show-progress: false
 
       - name: Scan
-        uses: actions/dependency-review-action@v3.1.3
+        uses: actions/dependency-review-action@v4.0.0
+        with:
+          ## Workaround from https://github.com/actions/dependency-review-action/issues/456
+          ## TODO: Remove when necessary
+          base-ref: ${{ github.event.pull_request.base.sha || 'master' }}
+          head-ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
   lint:
     name: Lint 🔬
@@ -39,7 +45,7 @@ jobs:
           show-progress: false
 
       - name: Setup node environment ⚙️
-        uses: actions/setup-node@v4.0.0
+        uses: actions/setup-node@v4.0.1
         with:
           node-version: 20
           check-latest: true
@@ -64,7 +70,7 @@ jobs:
           show-progress: false
 
       - name: Setup node environment ⚙️
-        uses: actions/setup-node@v4.0.0
+        uses: actions/setup-node@v4.0.1
         with:
           node-version: 20
           check-latest: true
@@ -84,7 +90,6 @@ jobs:
         platform:
           - "linux/amd64"
           - "linux/arm64"
-          - "linux/arm"
 
     steps:
       - name: Checkout ⬇️
@@ -118,17 +123,19 @@ jobs:
           docker rm jf
 
       - name: Upload artifact (Docker image) ⬆️📦
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v4.2.0
         if: ${{ matrix.platform == 'linux/amd64' }}
         with:
+          compression-level: 0
           name: docker_image
           path: |
             docker_image.tar
 
       - name: Upload artifact (Client) ⬆️💻
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v4.2.0
         if: ${{ matrix.platform == 'linux/amd64' }}
         with:
+          compression-level: 0
           name: frontend
           path: |
             dist
@@ -154,7 +161,7 @@ jobs:
           show-progress: false
 
       - name: Setup node environment ⚙️
-        uses: actions/setup-node@v4.0.0
+        uses: actions/setup-node@v4.0.1
         with:
           node-version: 20
           check-latest: true
@@ -172,27 +179,30 @@ jobs:
         run: npm run build
 
       - name: Upload artifact (Linux) ⬆️🐧
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v4.2.0
         if: matrix.platform == 'ubuntu-latest'
         with:
+          compression-level: 0
           name: jellyfin-vue_linux-amd64
           path: |
             packaging/tauri/target/release/bundle/deb/*.deb
             packaging/tauri/target/release/bundle/appimage_deb
 
       - name: Upload artifact (MacOS) ⬆️🍎
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v4.2.0
         if: matrix.platform == 'macos-latest'
         with:
+          compression-level: 0
           name: jellyfin-vue_macOS
           path: |
             packaging/tauri/target/release/bundle/macos
             packaging/tauri/target/release/bundle/dmg/*.dmg
 
       - name: Upload artifact (Windows) ⬆️🪟
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v4.2.0
         if: matrix.platform == 'windows-latest'
         with:
+          compression-level: 0
           name: jellyfin-vue_windows_amd64
           path: packaging/tauri/target/release/jellyfin-vue.exe
 
@@ -217,8 +227,9 @@ jobs:
           echo $PR_SHA > PR_sha
 
       - name: Upload PR number as artifact
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v4.2.0
         with:
+          compression-level: 0
           name: PR_context
           path: |
             PR_number
@@ -226,7 +237,7 @@ jobs:
 
   conventional_commits:
     name: Conventional commits check 💬
-    if: ${{ github.event_name == 'pull_request' }}
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -236,4 +247,4 @@ jobs:
           show-progress: false
 
       - name: Check if all commits comply with the specification
-        uses: webiny/action-conventional-commits@v1.1.0
+        uses: webiny/action-conventional-commits@v1.2.0

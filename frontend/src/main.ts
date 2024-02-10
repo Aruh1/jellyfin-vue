@@ -5,11 +5,13 @@
  */
 
 import { createApp } from 'vue';
+import { routes } from 'vue-router/auto/routes';
 import Root from '@/App.vue';
-/* eslint-disable @typescript-eslint/no-restricted-imports */
-import { createRemote, i18n, router, vuetify } from '@/plugins';
 import { hideDirective } from '@/plugins/directives';
-/* eslint-enable @typescript-eslint/no-restricted-imports */
+import { vuePlugin as i18n } from '@/plugins/i18n';
+import { createPlugin as createRemote } from '@/plugins/remote';
+import { router } from '@/plugins/router';
+import { vuetify } from '@/plugins/vuetify';
 
 /**
  * - GLOBAL STYLES -
@@ -21,13 +23,21 @@ import '@fontsource/roboto';
  * - VUE PLUGINS, STORE AND DIRECTIVE -
  * The order of statements IS IMPORTANT
  */
-/* eslint-disable-next-line @typescript-eslint/no-unsafe-argument */
-const app = createApp(Root);
 const remote = createRemote();
 
+const app = createApp(Root);
+
+/**
+ * We add routes at this point instead of in the router plugin to avoid circular references
+ * in components. At this stage, we're sure plugins are initiated.
+ */
+for (const route of routes) {
+  router.addRoute(route);
+}
+
+app.use(remote);
 app.use(i18n);
 app.use(router);
-app.use(remote);
 app.use(vuetify);
 app.directive('hide', hideDirective);
 
@@ -38,37 +48,10 @@ app.directive('hide', hideDirective);
 await router.isReady();
 
 /**
- * - DOM POPULATION -
+ * MOUNTING POINT
  *
- * Without window.setTimeout and window.requestAnimationFrame, the
- * splash screen gets frozen an small (but noticeable) amount of time.
- *
- * Once we reach this point, the bundle and the app will be completely loaded and mounted,
- * so we add a loadFinished class (defined in index.html) that fires the defined transition
- * in the HTML markup to give a nice effect.
+ * See how we remove the splashcreen on App.vue file
  */
-window.setTimeout(() => {
-  window.requestAnimationFrame(() => {
-    const appDOM = document.querySelector('#app');
-    const splashDOM = document.querySelector('.splashBackground');
-
-    if (!appDOM || !splashDOM) {
-      throw new Error('could not locate app div or splash div in DOM');
-    }
-
-    splashDOM.addEventListener(
-      'transitionend',
-      () => {
-        window.setTimeout(() => {
-          window.requestAnimationFrame(() => {
-            splashDOM.remove();
-          });
-        });
-      },
-      { once: true }
-    );
-
-    app.mount(appDOM);
-    splashDOM.classList.add('loadFinished');
-  });
+window.requestAnimationFrame(() => {
+  app.mount('#app');
 });

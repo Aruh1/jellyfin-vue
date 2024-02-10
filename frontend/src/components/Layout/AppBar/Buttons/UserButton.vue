@@ -48,13 +48,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { useI18n } from 'vue-i18n';
 import IMdiCog from 'virtual:icons/mdi/cog';
 import IMdiLogout from 'virtual:icons/mdi/logout';
 import IMdiPencil from 'virtual:icons/mdi/pencil';
-import { useRemote } from '@/composables';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router/auto';
+import { remote } from '@/plugins/remote';
 
 interface MenuItem {
   title: string;
@@ -63,7 +63,7 @@ interface MenuItem {
 }
 
 const router = useRouter();
-const auth = useRemote().auth;
+const auth = remote.auth;
 const { t } = useI18n();
 
 const menuItems = computed<MenuItem[]>(() => {
@@ -81,7 +81,7 @@ const menuItems = computed<MenuItem[]>(() => {
 
   menuItems.push(
     {
-      title: t('settings.settings'),
+      title: t('settings'),
       icon: IMdiCog,
       action: async (): Promise<void> => {
         await router.push('/settings');

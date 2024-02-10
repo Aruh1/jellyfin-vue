@@ -1,7 +1,7 @@
 <template>
   <LoadingIndicator />
   <VMain class="h-100">
-    <PageView />
+    <slot />
   </VMain>
   <VFooter
     app
@@ -11,3 +11,6 @@
       elevated />
   </VFooter>
 </template>
+
+<script setup lang="ts">
+</script>

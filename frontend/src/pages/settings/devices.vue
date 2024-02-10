@@ -1,5 +1,5 @@
 <template>
-  <SettingsPage page-title="settings.devices.devices">
+  <SettingsPage page-title="devices">
     <template #actions>
       <VBtn
         v-if="devices.length > 0"
@@ -8,14 +8,14 @@
         class="ml-a"
         :loading="loading"
         @click="deleteAllDevices">
-        {{ t('settings.devices.deleteAll') }}
+        {{ t('deleteAll') }}
       </VBtn>
       <VBtn
         variant="elevated"
         href="https://jellyfin.org/docs/general/server/devices.html"
         rel="noreferrer noopener"
         target="_blank">
-        {{ t('settings.help') }}
+        {{ t('help') }}
       </VBtn>
     </template>
     <template #content>
@@ -48,7 +48,7 @@
                       formatRelative,
                       parseJSON(device[value] ?? 'unknown'),
                       new Date()
-                    ).value
+                    )
                 }}
               </td>
               <td>
@@ -56,7 +56,7 @@
                   color="error"
                   :disabled="loading"
                   @click="confirmDelete = device.Id ?? undefined">
-                  {{ t('settings.devices.delete') }}
+                  {{ t('delete') }}
                 </VBtn>
               </td>
             </tr>
@@ -69,7 +69,7 @@
         @update:model-value="confirmDelete = undefined">
         <VCard>
           <VCardText>
-            {{ t('settings.devices.deleteConfirm') }}
+            {{ t('deleteConfirm') }}
           </VCardText>
           <VCardActions>
             <VBtn
@@ -96,15 +96,16 @@ meta:
 </route>
 
 <script setup lang="ts">
-import { parseJSON, formatRelative } from 'date-fns';
+import type { DeviceInfo } from '@jellyfin/sdk/lib/generated-client';
+import { getDevicesApi } from '@jellyfin/sdk/lib/utils/api/devices-api';
+import { formatRelative, parseJSON } from 'date-fns';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { DeviceInfo } from '@jellyfin/sdk/lib/generated-client';
-import { getDevicesApi } from '@jellyfin/sdk/lib/utils/api/devices-api';
-import { useDateFns, useRemote, useSnackbar } from '@/composables';
+import { remote } from '@/plugins/remote';
+import { useSnackbar } from '@/composables/use-snackbar';
+import { useDateFns } from '@/composables/use-datefns';
 
 const { t } = useI18n();
-const remote = useRemote();
 
 const devices = ref(
   (await remote.sdk.newUserApi(getDevicesApi).getDevices()).data.Items ?? []
@@ -116,14 +117,14 @@ const confirmDelete = ref<string>();
 
 const headers = computed<{ text: string; value: keyof DeviceInfo }[]>(() => [
   {
-    text: t('settings.devices.userName'),
+    text: t('userName'),
     value: 'LastUserName'
   },
-  { text: t('settings.devices.deviceName'), value: 'Name' },
-  { text: t('settings.devices.appName'), value: 'AppName' },
-  { text: t('settings.devices.appVersion'), value: 'AppVersion' },
+  { text: t('deviceName'), value: 'Name' },
+  { text: t('appName'), value: 'AppName' },
+  { text: t('appVersion'), value: 'AppVersion' },
   {
-    text: t('settings.devices.lastActive'),
+    text: t('lastActive'),
     value: 'DateLastActivity'
   }
 ]);
@@ -136,22 +137,20 @@ async function deleteAllDevices(): Promise<void> {
 
   try {
     for (const device of devices.value) {
-      if (!device.Id || remote.sdk.deviceInfo.id === device.Id) {
-        continue;
+      if (device.Id || remote.sdk.deviceInfo.id === device.Id) {
+        await remote.sdk
+          .newUserApi(getDevicesApi)
+          .deleteDevice({ id: device.Id });
       }
-
-      await remote.sdk
-        .newUserApi(getDevicesApi)
-        .deleteDevice({ id: device.Id });
     }
 
-    useSnackbar(t('settings.devices.deleteAllDevicesSuccess'), 'success');
+    useSnackbar(t('deleteAllDevicesSuccess'), 'success');
 
     devices.value =
       (await remote.sdk.newUserApi(getDevicesApi).getDevices()).data.Items ??
       [];
   } catch (error) {
-    useSnackbar(t('settings.devices.deleteAllDevicesError'), 'error');
+    useSnackbar(t('deleteAllDevicesError'), 'error');
     console.error(error);
   } finally {
     loading.value = false;
@@ -167,7 +166,7 @@ async function deleteDevice(deviceId: string): Promise<void> {
   try {
     await remote.sdk.newUserApi(getDevicesApi).deleteDevice({ id: deviceId });
 
-    useSnackbar(t('settings.devices.deleteDeviceSuccess'), 'success');
+    useSnackbar(t('deleteDeviceSuccess'), 'success');
 
     devices.value =
       (await remote.sdk.newUserApi(getDevicesApi).getDevices()).data.Items ??

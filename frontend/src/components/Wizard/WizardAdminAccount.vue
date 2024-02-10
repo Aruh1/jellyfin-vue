@@ -19,7 +19,7 @@
     <VTextField
       v-model="passwordCheck"
       variant="outlined"
-      :label="t('wizard.confirmPassword')"
+      :label="t('confirmPassword')"
       :append-icon="showPassword ? IconEyeOff : IconEye"
       :type="showPassword ? 'text' : 'password'"
       :rules="SamePasswordRules"
@@ -45,13 +45,14 @@
 </template>
 
 <script setup lang="ts">
+import type { StartupUserDto } from '@jellyfin/sdk/lib/generated-client';
 import { getStartupApi } from '@jellyfin/sdk/lib/utils/api/startup-api';
-import { StartupUserDto } from '@jellyfin/sdk/lib/generated-client';
+import IconEye from 'virtual:icons/mdi/eye';
+import IconEyeOff from 'virtual:icons/mdi/eye-off';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import IconEyeOff from 'virtual:icons/mdi/eye-off';
-import IconEye from 'virtual:icons/mdi/eye';
-import { useRemote, useSnackbar } from '@/composables';
+import { remote } from '@/plugins/remote';
+import { useSnackbar } from '@/composables/use-snackbar';
 
 const emit = defineEmits<{
   'previous-step': [];
@@ -59,7 +60,6 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const remote = useRemote();
 
 const valid = ref(false);
 const admin = ref<StartupUserDto>({
@@ -72,10 +72,10 @@ const loading = ref(false);
 
 const SamePasswordRules = [
   (v: string): boolean | string =>
-    v === admin.value.Password || t('validation.bothPasswordsSame')
+    v === admin.value.Password || t('bothPasswordsSame')
 ];
 const RequiredRule = [
-  (v: string): boolean | string => !!v.trim() || t('validation.required')
+  (v: string): boolean | string => !!v.trim() || t('required')
 ];
 
 /**
@@ -98,7 +98,7 @@ async function createAdminAccount(): Promise<void> {
     emit('step-complete');
   } catch (error) {
     console.error(error);
-    useSnackbar(t('wizard.setAdminError'), 'error');
+    useSnackbar(t('setAdminError'), 'error');
   } finally {
     loading.value = false;
   }

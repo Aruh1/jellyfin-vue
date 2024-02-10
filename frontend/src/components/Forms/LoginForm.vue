@@ -26,7 +26,7 @@
         hide-details
         class="mt-6 mb-6"
         color="primary"
-        :label="$t('login.rememberMe')" />
+        :label="$t('rememberMe')" />
       <VRow
         align="center"
         no-gutters>
@@ -37,7 +37,7 @@
             block
             size="large"
             variant="elevated">
-            {{ $t('login.changeServer') }}
+            {{ $t('changeServer') }}
           </VBtn>
           <VBtn
             v-else
@@ -45,7 +45,7 @@
             size="large"
             variant="elevated"
             @click="$emit('change')">
-            {{ $t('login.changeUser') }}
+            {{ $t('changeUser') }}
           </VBtn>
         </VCol>
         <VCol class="mr-2">
@@ -66,15 +66,15 @@
 </template>
 
 <script setup lang="ts">
+import type { UserDto } from '@jellyfin/sdk/lib/generated-client';
 import { isEmpty } from 'lodash-es';
+import IconEye from 'virtual:icons/mdi/eye';
+import IconEyeOff from 'virtual:icons/mdi/eye-off';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
-import { UserDto } from '@jellyfin/sdk/lib/generated-client';
-import IconEyeOff from 'virtual:icons/mdi/eye-off';
-import IconEye from 'virtual:icons/mdi/eye';
-import { useRemote } from '@/composables';
-import { userLibrariesStore } from '@/store';
+import { useRouter } from 'vue-router/auto';
+import { fetchIndexPage } from '@/utils/items';
+import { remote } from '@/plugins/remote';
 
 const props = defineProps<{ user: UserDto }>();
 
@@ -82,18 +82,16 @@ defineEmits<{
   change: [];
 }>();
 
-const remote = useRemote();
 const { t } = useI18n();
 
 const router = useRouter();
-const userLibraries = userLibrariesStore();
 
 const valid = ref(false);
 const login = ref({ username: '', password: '', rememberMe: true });
 const showPassword = ref(false);
 const loading = ref(false);
 const rules = [
-  (v: string): boolean | string => !!v.trim() || t('validation.required')
+  (v: string): boolean | string => !!v.trim() || t('required')
 ];
 
 /**
@@ -116,7 +114,11 @@ async function userLogin(): Promise<void> {
       login.value.rememberMe
     );
 
-    await userLibraries.refresh();
+    /**
+     * We fetch all the default layout data here to keep the "login" button
+     * loading spinner active until we redirect the user.
+     */
+    await fetchIndexPage();
 
     await router.replace('/');
   } finally {

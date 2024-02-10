@@ -1,36 +1,43 @@
+import { useTitle } from '@vueuse/core';
 import { computed, watch } from 'vue';
 import {
   createRouter,
   createWebHashHistory,
   createWebHistory
 } from 'vue-router';
-import { useTitle } from '@vueuse/core';
-import generatedRoutes from 'virtual:generated-pages';
-import loginGuard from './middlewares/login';
-import adminGuard from './middlewares/admin-pages';
-import validateGuard from './middlewares/validate';
-import metaGuard from './middlewares/meta';
-import playbackGuard from './middlewares/playback';
+import type { RouterTyped } from 'vue-router/auto';
+import { remote } from '../remote';
+import { adminGuard } from './middlewares/admin-pages';
+import { loginGuard } from './middlewares/login';
+import { metaGuard } from './middlewares/meta';
+import { validateGuard } from './middlewares/validate';
+import { isStr } from '@/utils/validation';
 import { getJSONConfig } from '@/utils/external-config';
-import { useRemote } from '@/composables';
 
-const router = createRouter({
+export const router = createRouter({
   history:
     (await getJSONConfig()).routerMode === 'history'
       ? createWebHistory()
       : createWebHashHistory(),
-  routes: generatedRoutes
-});
+  routes: [],
+  /**
+   * TODO: Fix this, so it only scrolls to the top once suspense resolves
+   */
+  scrollBehavior(_to, _from, savedPosition) {
+    return savedPosition ?? { top: 0 };
+  }
+}) as RouterTyped;
 
 /**
- * Middlewares
- *  - The order IS IMPORTANT (meta handling should always go first)
+ * Middleware pipeline: The order IS IMPORTANT (meta handling should always go first)
+ *
+ * Route-specific guards should be defined in the route itself, not here.
+ * See the playback pages for an example of this.
  */
 router.beforeEach(metaGuard);
 router.beforeEach(loginGuard);
 router.beforeEach(adminGuard);
 router.beforeEach(validateGuard);
-router.beforeEach(playbackGuard);
 
 /**
  * Replaces the 'back' function, taking into account if there's a previous page or not.
@@ -56,7 +63,7 @@ router.back = (): ReturnType<typeof router.back> => {
   window.setTimeout(
     async () =>
       await router.replace(
-        typeof router.options.history.state.back === 'string'
+        isStr(router.options.history.state.back)
           ? router.options.history.state.back
           : '/'
       )
@@ -75,10 +82,8 @@ const pageTitle = computed(() => {
 useTitle(pageTitle);
 
 /**
- * Re-run the middleware pipeline when the user logs out
+ * Re-run the middleware pipeline when the user logs out or state is cleared
  */
-const remote = useRemote();
-
 watch(
   [
     (): typeof remote.auth.currentUser => remote.auth.currentUser,
@@ -101,7 +106,7 @@ watch(
       remote.auth.servers.length > 0 &&
       remote.auth.currentServer
     ) {
-      await router.replace('/server/login');
+      await (remote.auth.currentServer.StartupWizardCompleted ? router.replace('/server/login') : router.replace('/wizard'));
     } else if (
       !remote.auth.currentUser &&
       remote.auth.servers.length > 0 &&
@@ -111,5 +116,3 @@ watch(
     }
   }
 );
-
-export default router;

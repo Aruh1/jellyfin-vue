@@ -1,76 +1,91 @@
 import { useWebSocket } from '@vueuse/core';
 import { destr } from 'destr';
-import { isNil } from 'lodash-es';
 import { computed, watch } from 'vue';
 import auth from '../auth';
 import sdk from '../sdk';
-import { WebSocketMessage } from './types';
-
-/**
- * Formats the message to be sent to the socket
- */
-function formatSocketMessage(
-  name: string,
-  data?: WebSocketMessage['Data']
-): string {
-  const message: WebSocketMessage = { MessageType: name };
-
-  if (!isNil(data)) {
-    message.Data = data;
-  }
-
-  return JSON.stringify(message);
-}
-
-const socketUrl = computed(() => {
-  if (
-    auth.currentUserToken &&
-    auth.currentServer &&
-    sdk.deviceInfo.id &&
-    sdk.api?.basePath
-  ) {
-    const socketParameters = new URLSearchParams({
-      api_key: auth.currentUserToken,
-      deviceId: sdk.deviceInfo.id
-    }).toString();
-
-    return `${sdk.api.basePath}/socket?${socketParameters}`
-      .replace('https:', 'wss:')
-      .replace('http:', 'ws:');
-  }
-});
-
-const { data, send } = useWebSocket(socketUrl, {
-  heartbeat: false,
-  autoReconnect: { retries: () => true },
-  immediate: true,
-  autoClose: false
-});
+import type { WebSocketMessage } from './types';
+import { isNil } from '@/utils/validation';
 
 class RemotePluginSocket {
-  public get message(): WebSocketMessage | null {
-    return destr(data.value);
-  }
+  /**
+   * == STATE ==
+   */
+  private readonly _socketUrl = computed(() => {
+    if (
+      auth.currentUserToken &&
+      auth.currentServer &&
+      sdk.deviceInfo.id &&
+      sdk.api?.basePath
+    ) {
+      const socketParameters = new URLSearchParams({
+        api_key: auth.currentUserToken,
+        deviceId: sdk.deviceInfo.id
+      }).toString();
+
+      return `${sdk.api.basePath}/socket?${socketParameters}`
+        .replace('https:', 'wss:')
+        .replace('http:', 'ws:');
+    }
+  });
+  private readonly _keepAliveMessage = 'KeepAlive';
+  private readonly _forceKeepAliveMessage = 'ForceKeepAlive';
+  /**
+   * Formats the message to be sent to the socket
+   */
+  private readonly _webSocket = useWebSocket(this._socketUrl, {
+    heartbeat: false,
+    autoReconnect: { retries: () => true },
+    immediate: true,
+    autoClose: false
+  });
+  private readonly _parsedmsg = computed<WebSocketMessage | undefined>(() => destr(this._webSocket.data.value));
+  public readonly message = computed<WebSocketMessage | undefined>((previous) => {
+    if (this._parsedmsg.value?.MessageType === this._keepAliveMessage ||
+      this._parsedmsg.value?.MessageType === this._forceKeepAliveMessage) {
+      return previous;
+    }
+
+    return this._parsedmsg.value;
+  });
+  public readonly isConnected = computed(() => this._webSocket.status.value === 'OPEN');
+
+  /**
+   * == METHODS ==
+   */
+  private readonly _formatSocketMessage = (
+    name: string,
+    data?: WebSocketMessage['Data']
+  ): string => {
+    const message: WebSocketMessage = { MessageType: name };
+
+    if (!isNil(data)) {
+      message.Data = data;
+    }
+
+    return JSON.stringify(message);
+  };
 
   /**
    * Send message to socket
    * @param name - Name of the message type to be sent
    * @param data - Payload to send
    */
-  public sendToSocket(
-    ...arguments_: Parameters<typeof formatSocketMessage>
-  ): void {
-    send(formatSocketMessage(...arguments_));
-  }
+  public readonly sendToSocket = (
+    ...arguments_: Parameters<typeof this._formatSocketMessage>
+  ): void => {
+    this._webSocket.send(this._formatSocketMessage(...arguments_));
+  };
 
   public constructor() {
-    watch(
-      () => this.message,
-      () => {
-        if (this.message?.MessageType === 'ForceKeepAlive') {
-          this.sendToSocket('KeepAlive');
-        }
+    /**
+     * Sending updates through this watcher to avoid sending KeepAlive messages to consumers of
+     * of this plugin
+     */
+    watch(this._parsedmsg, () => {
+      if (this._parsedmsg.value?.MessageType === this._forceKeepAliveMessage) {
+        this.sendToSocket(this._keepAliveMessage);
       }
+    }, { flush: 'sync' }
     );
   }
 }

@@ -7,7 +7,7 @@
     <VCard
       height="100%"
       class="image-search-card">
-      <VCardTitle>{{ t('search.name') }}</VCardTitle>
+      <VCardTitle>{{ t('search') }}</VCardTitle>
       <VDivider />
       <VRow
         align="center"
@@ -17,8 +17,8 @@
           class="mx-4"
           :items="sources"
           :disabled="loading"
-          :label="t('metadata.source')"
-          :placeholder="t('metadata.sourceAll')"
+          :label="t('source')"
+          :placeholder="t('all')"
           persistent-placeholder
           variant="outlined"
           hide-details
@@ -30,7 +30,7 @@
           item-title="text"
           item-value="value"
           :disabled="loading"
-          :label="t('metadata.type')"
+          :label="t('type')"
           variant="outlined"
           hide-details />
         <VCheckbox
@@ -74,20 +74,24 @@
             <div class="text-center text-truncate text-subtitle-1 mt-2">
               {{ item.ProviderName }}
             </div>
-            <div class="text-center text-body-2 text-grey-darken-2 info-box">
-              <template v-if="item.Width && item.Height">
-                {{ item.Width }} &times; {{ item.Height }}
-                <template v-if="item.Language">
-                  &middot; {{ item.Language }}
-                </template>
-              </template>
+            <div
+              v-if="item.Width && item.Height"
+              class="text-center text-body-2 text-grey-darken-2 info-box">
+              {{ t('dimensions', { width: item.Width, height: item.Height }) }}
+            </div>
+            <div
+              v-if="item.Language"
+              class="text-center text-body-2 text-grey-darken-2 info-box">
+              <b>{{ `${t("language")}: ` }}</b>{{ getLocaleName(item.Language) }}
+            </div>
+            <div
+              v-if="item.CommunityRating"
+              class="text-center text-body-2 text-grey-darken-2 info-box">
+              <b>{{ `${t("communityRating")}: ` }}</b>{{ item.CommunityRating.toFixed(1) }}
             </div>
             <div class="text-center text-body-2 text-grey-darken-2 info-box">
-              <template v-if="item.CommunityRating">
-                {{ item.CommunityRating.toFixed(1) }}
-                <template v-if="item.VoteCount">
-                  &middot; {{ item.VoteCount }} votes
-                </template>
+              <template v-if="item.VoteCount">
+                {{ t('imageVotes', { votes: item.VoteCount }) }}
               </template>
             </div>
             <VSpacer />
@@ -109,17 +113,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
 import {
-  ImageProviderInfo,
-  RemoteImageInfo,
+  type BaseItemDto,
+  type ImageProviderInfo,
   ImageType,
-  BaseItemDto
+  type RemoteImageInfo
 } from '@jellyfin/sdk/lib/generated-client';
 import { getRemoteImageApi } from '@jellyfin/sdk/lib/utils/api/remote-image-api';
+import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { getContainerAspectRatioForImageType } from '@/utils/images';
-import { useRemote } from '@/composables';
+import { getLocaleName } from '@/utils/i18n';
+import { remote } from '@/plugins/remote';
 
 const props = defineProps<{
   metadata: BaseItemDto;
@@ -132,7 +137,6 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const remote = useRemote();
 
 const providers = ref<ImageProviderInfo[]>([]);
 const type = ref<ImageType>(ImageType.Primary);
@@ -144,47 +148,47 @@ const loading = ref(false);
 const types = computed(() => [
   {
     value: ImageType.Primary,
-    text: t('imageType.primary')
+    text: t('primary')
   },
   {
     value: ImageType.Art,
-    text: t('imageType.art')
+    text: t('art')
   },
   {
     value: ImageType.Backdrop,
-    text: t('imageType.backdrop')
+    text: t('backdrop')
   },
   {
     value: ImageType.Banner,
-    text: t('imageType.banner')
+    text: t('banner')
   },
   {
     value: ImageType.Box,
-    text: t('imageType.box')
+    text: t('box')
   },
   {
     value: ImageType.BoxRear,
-    text: t('imageType.boxRear')
+    text: t('boxRear')
   },
   {
     value: ImageType.Disc,
-    text: t('imageType.disc')
+    text: t('disc')
   },
   {
     value: ImageType.Logo,
-    text: t('imageType.logo')
+    text: t('logo')
   },
   {
     value: ImageType.Menu,
-    text: t('imageType.menu')
+    text: t('menu')
   },
   {
     value: ImageType.Screenshot,
-    text: t('imageType.screenshot')
+    text: t('screenshot')
   },
   {
     value: ImageType.Thumb,
-    text: t('imageType.thumb')
+    text: t('thumb')
   }
 ]);
 

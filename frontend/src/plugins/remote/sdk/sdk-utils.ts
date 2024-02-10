@@ -1,8 +1,8 @@
-import { Api, Jellyfin } from '@jellyfin/sdk';
-import { RemovableRef, useStorage } from '@vueuse/core';
+import { type Api, Jellyfin } from '@jellyfin/sdk';
+import { type RemovableRef, useStorage } from '@vueuse/core';
 import { v4 } from 'uuid';
-import { DeviceState } from './types';
-import { version } from '@/../package.json';
+import type { DeviceState } from './types';
+import { mergeExcludingUnknown } from '@/utils/data-manipulation';
 import {
   isAndroid,
   isApple,
@@ -14,7 +14,7 @@ import {
   isTizen,
   isWebOS
 } from '@/utils/browser-detection';
-import { mergeExcludingUnknown } from '@/utils/data-manipulation';
+import { version } from '@/../package.json';
 
 const state: RemovableRef<DeviceState> = useStorage(
   'deviceProfile',
@@ -45,10 +45,6 @@ const SDK = new Jellyfin({
 function getDeviceName(): string {
   let deviceName = 'Unknown';
 
-  /*
-   * TODO: Replace with pattern matching once TC39 adopts the proposal
-   * See: https://github.com/tc39/proposal-pattern-matching
-   */
   if (isChrome()) {
     deviceName = 'Chrome';
   } else if (isEdge() && !isChromiumBased()) {

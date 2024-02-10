@@ -42,14 +42,13 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter } from 'vue-router/auto';
+import { remote } from '@/plugins/remote';
 import type { ServerInfo } from '@/plugins/remote/auth/types';
-import { useRemote } from '@/composables';
 
 const props = defineProps<{ serverInfo: ServerInfo }>();
 
 const loading = ref(false);
-const remote = useRemote();
 const router = useRouter();
 
 /**

@@ -1,20 +1,20 @@
-import { RouteLocationNormalized, RouteLocationRaw } from 'vue-router';
-import { useSnackbar } from '@/components/System/Snackbar.vue';
-import { usei18n } from '@/composables';
-import { isValidMD5 } from '@/utils/items';
+import type { RouteLocationNormalized, RouteLocationRaw } from 'vue-router/auto';
+import { useSnackbar } from '@/composables/use-snackbar';
+import { i18n } from '@/plugins/i18n';
+import { isStr } from '@/utils/validation';
 
 /**
- * Validates that the route has a correct itemId parameter
+ * Validates that the route has a correct itemId parameter by checking that the parameter is a valid
+ * MD5 hash.
  */
-export default function validateGuard(
+export function validateGuard(
   to: RouteLocationNormalized
 ): boolean | RouteLocationRaw {
-  if (to.params.itemId && typeof to.params.itemId === 'string') {
-    const { t } = usei18n();
-    const check = isValidMD5(to.params.itemId);
+  if (('itemId' in to.params) && isStr(to.params.itemId)) {
+    const check = /[\dA-Fa-f]{32}/.test(to.params.itemId);
 
     if (!check) {
-      useSnackbar(t('snackbar.routeValidationError'), 'error');
+      useSnackbar(i18n.t('routeValidationError'), 'error');
 
       return { path: '/', replace: true };
     }

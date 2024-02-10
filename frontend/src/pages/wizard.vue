@@ -87,15 +87,15 @@ meta:
 </route>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useI18n } from 'vue-i18n';
 import { getStartupApi } from '@jellyfin/sdk/lib/utils/api/startup-api';
-import { useRemote, useSnackbar } from '@/composables';
+import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router/auto';
+import { useSnackbar } from '@/composables/use-snackbar';
+import { remote } from '@/plugins/remote';
 
 const { t } = useI18n();
 const router = useRouter();
-const remote = useRemote();
 
 const wizardStage = ref(1);
 const maxWizardStage = ref(1);
@@ -103,16 +103,16 @@ const maxWizardStage = ref(1);
 const heading = computed(() => {
   switch (wizardStage.value) {
     case 1: {
-      return t('wizard.languageLocale');
+      return t('languageLocale');
     }
     case 2: {
-      return t('wizard.administratorAccount');
+      return t('administratorAccount');
     }
     case 3: {
-      return t('wizard.preferredMetadataLanguage');
+      return t('preferredMetadataLanguage');
     }
     case 4: {
-      return t('wizard.remoteAccess');
+      return t('remoteAccess');
     }
   }
 
@@ -133,7 +133,7 @@ async function completeWizard(): Promise<void> {
     await router.replace('/server/login');
   } catch (error) {
     console.error(error);
-    useSnackbar(t('wizard.completeError'), 'success');
+    useSnackbar(t('completeError'), 'success');
   }
 }
 

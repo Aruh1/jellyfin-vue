@@ -2,7 +2,7 @@
   <div>
     <VCheckbox
       v-model="allowRemoteAccess"
-      :label="t('wizard.allowRemoteAccess')"
+      :label="t('allowRemoteAccess')"
       :disabled="loading" />
     <VCheckbox
       v-model="enableUPNP"
@@ -25,10 +25,11 @@
 </template>
 
 <script setup lang="ts">
+import { getStartupApi } from '@jellyfin/sdk/lib/utils/api/startup-api';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { getStartupApi } from '@jellyfin/sdk/lib/utils/api/startup-api';
-import { useRemote, useSnackbar } from '@/composables';
+import { remote } from '@/plugins/remote';
+import { useSnackbar } from '@/composables/use-snackbar';
 
 const emit = defineEmits<{
   'step-complete': [];
@@ -36,7 +37,6 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const remote = useRemote();
 
 const allowRemoteAccess = ref(false);
 const enableUPNP = ref(false);
@@ -63,7 +63,7 @@ async function setRemoteAccess(): Promise<void> {
     emit('step-complete');
   } catch (error) {
     console.error(error);
-    useSnackbar(t('wizard.setRemoteError'), 'error');
+    useSnackbar(t('setRemoteError'), 'error');
   } finally {
     loading.value = false;
   }

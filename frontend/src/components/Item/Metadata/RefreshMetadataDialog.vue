@@ -54,15 +54,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
-import {
+import type {
   BaseItemDto,
   MetadataRefreshMode
 } from '@jellyfin/sdk/lib/generated-client';
 import { getItemRefreshApi } from '@jellyfin/sdk/lib/utils/api/item-refresh-api';
-import { useRemote, useSnackbar } from '@/composables';
-import taskManager, { TaskType } from '@/store/taskManager';
+import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { TaskType, taskManager } from '@/store/taskManager';
+import { remote } from '@/plugins/remote';
+import { useSnackbar } from '@/composables/use-snackbar';
 
 interface RefreshMethod {
   title: string;
@@ -119,7 +120,6 @@ const refreshMode = computed<MetadataRefreshMode>(() => {
  * Refresh metadata of the current item
  */
 async function refreshMetadata(): Promise<void> {
-  const remote = useRemote();
   const replaceMetadata = selectedMethod.value.value === 'all';
 
   if (!props.item.Id) {

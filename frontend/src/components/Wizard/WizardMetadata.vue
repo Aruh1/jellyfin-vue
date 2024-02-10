@@ -36,17 +36,18 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
-import {
+import type {
   CountryInfo,
   CultureDto,
   StartupConfigurationDto
 } from '@jellyfin/sdk/lib/generated-client';
 import { getLocalizationApi } from '@jellyfin/sdk/lib/utils/api/localization-api';
 import { getStartupApi } from '@jellyfin/sdk/lib/utils/api/startup-api';
-import { useRemote, useSnackbar } from '@/composables';
+import { onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { SomeItemSelectedRule } from '@/utils/validation';
+import { remote } from '@/plugins/remote';
+import { useSnackbar } from '@/composables/use-snackbar';
 
 const emit = defineEmits<{
   'step-complete': [];
@@ -54,7 +55,6 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const remote = useRemote();
 
 const metadataLanguage = ref('');
 const metadataCountry = ref('');
@@ -101,7 +101,7 @@ async function setMetadata(): Promise<void> {
     emit('step-complete');
   } catch (error) {
     console.error(error);
-    useSnackbar(t('wizard.setMetadataError'), 'error');
+    useSnackbar(t('setMetadataError'), 'error');
   } finally {
     loading.value = false;
   }

@@ -3,7 +3,7 @@
     v-model="searchQuery"
     class="search-input"
     :prepend-inner-icon="IMdiMagnify"
-    :placeholder="$t('search.name')"
+    :placeholder="$t('search')"
     density="compact"
     hide-details
     single-line
@@ -11,9 +11,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
 import IMdiMagnify from 'virtual:icons/mdi/magnify';
+import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router/auto';
 
 const route = useRoute();
 const router = useRouter();

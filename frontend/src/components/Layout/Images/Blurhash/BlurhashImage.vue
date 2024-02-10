@@ -55,21 +55,21 @@
 </template>
 
 <script lang="ts">
-import { computed, shallowRef, ref } from 'vue';
-import { refDebounced } from '@vueuse/core';
 import {
-  BaseItemDto,
-  BaseItemPerson,
+  type BaseItemDto,
+  type BaseItemPerson,
   ImageType
 } from '@jellyfin/sdk/lib/generated-client';
-import { useVuetify } from '@/composables';
+import { refDebounced } from '@vueuse/core';
+import { computed, ref, shallowRef } from 'vue';
+import { vuetify } from '@/plugins/vuetify';
 import { getBlurhash, getImageInfo } from '@/utils/images';
 import { getItemIcon } from '@/utils/items';
 
 /**
  * SHARED STATE ACROSS ALL THE COMPONENT INSTANCES
  */
-const display = useVuetify().display;
+const display = vuetify.display;
 const displayWidth = refDebounced(display.width, 2000);
 const displayHeight = refDebounced(display.height, 2000);
 </script>

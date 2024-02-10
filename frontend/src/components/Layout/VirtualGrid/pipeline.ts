@@ -1,5 +1,5 @@
-import { MaybeElementRef, unrefElement } from '@vueuse/core';
-import { computed, ComputedRef } from 'vue';
+import { unrefElement, type MaybeElementRef } from '@vueuse/core';
+import { computed, type ComputedRef } from 'vue';
 
 /**
  * == TYPES AND INTERFACES ==
@@ -239,10 +239,11 @@ export function getBufferMeta(
    *
    * Take in account as well the user-provided multiplier
    */
+  const intersectedWithMultiplier = itemsIntersectingViewport * multiplier;
   const renderedItems =
-    (itemsIntersectingViewport * multiplier) % 2 === 0
-      ? itemsIntersectingViewport * 4 * multiplier
-      : itemsIntersectingViewport * 4 * multiplier + 1;
+    (intersectedWithMultiplier) % 2 === 0
+      ? intersectedWithMultiplier * 4
+      : intersectedWithMultiplier * 4 + 1;
   /**
    * DOM nodes that are not intersecting the viewport
    */

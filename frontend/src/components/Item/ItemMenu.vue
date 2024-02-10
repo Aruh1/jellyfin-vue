@@ -54,39 +54,43 @@
 </template>
 
 <script lang="ts">
-import { computed, getCurrentInstance, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { useEventListener, useClipboard } from '@vueuse/core';
-import { BaseItemDto } from '@jellyfin/sdk/lib/generated-client';
-import IMdiPlaySpeed from 'virtual:icons/mdi/play-speed';
-import IMdiArrowExpandUp from 'virtual:icons/mdi/arrow-expand-up';
+import type { BaseItemDto } from '@jellyfin/sdk/lib/generated-client';
+import { useClipboard, useEventListener } from '@vueuse/core';
+import { v4 } from 'uuid';
 import IMdiArrowExpandDown from 'virtual:icons/mdi/arrow-expand-down';
+import IMdiArrowExpandUp from 'virtual:icons/mdi/arrow-expand-up';
 import IMdiCloudSearch from 'virtual:icons/mdi/cloud-search-outline';
 import IMdiContentCopy from 'virtual:icons/mdi/content-copy';
 import IMdiDelete from 'virtual:icons/mdi/delete';
 import IMdiDisc from 'virtual:icons/mdi/disc';
 import IMdiInformation from 'virtual:icons/mdi/information';
+import IMdiPencilOutline from 'virtual:icons/mdi/pencil-outline';
+import IMdiPlaySpeed from 'virtual:icons/mdi/play-speed';
 import IMdiPlaylistMinus from 'virtual:icons/mdi/playlist-minus';
 import IMdiPlaylistPlus from 'virtual:icons/mdi/playlist-plus';
-import IMdiPencilOutline from 'virtual:icons/mdi/pencil-outline';
-import IMdiShuffle from 'virtual:icons/mdi/shuffle';
-import IMdiReplay from 'virtual:icons/mdi/replay';
 import IMdiRefresh from 'virtual:icons/mdi/refresh';
-import { getLibraryApi } from '@jellyfin/sdk/lib/utils/api/library-api';
-import { useRoute, useRouter } from 'vue-router';
-import { v4 } from 'uuid';
-import { useRemote, useSnackbar, useConfirmDialog } from '@/composables';
+import IMdiReplay from 'virtual:icons/mdi/replay';
+import IMdiShuffle from 'virtual:icons/mdi/shuffle';
+import { computed, getCurrentInstance, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRoute, useRouter } from 'vue-router/auto';
+import { isStr } from '@/utils/validation';
 import {
   canIdentify,
   canInstantMix,
   canRefreshMetadata,
   canResume,
-  getItemIdFromSourceIndex,
   getItemDownloadUrl,
+  getItemIdFromSourceIndex,
   getItemSeasonDownloadMap,
   getItemSeriesDownloadMap
 } from '@/utils/items';
-import { playbackManagerStore, taskManagerStore } from '@/store';
+import { taskManager } from '@/store/taskManager';
+import { playbackManager } from '@/store/playbackManager';
+import { apiStore } from '@/store/api';
+import { remote } from '@/plugins/remote';
+import { useSnackbar } from '@/composables/use-snackbar';
+import { useConfirmDialog } from '@/composables/use-confirm-dialog';
 
 type MenuOption = {
   title: string;
@@ -121,7 +125,6 @@ const menuProps = withDefaults(
 );
 const { t } = useI18n();
 const instanceId = v4();
-const remote = useRemote();
 const router = useRouter();
 const route = useRoute();
 
@@ -149,11 +152,9 @@ const metadataDialog = ref(false);
 const refreshDialog = ref(false);
 const identifyItemDialog = ref(false);
 const mediaInfoDialog = ref(false);
-const playbackManager = playbackManagerStore();
-const taskManager = taskManagerStore();
-const errorMessage = t('errors.anErrorHappened');
+const errorMessage = t('anErrorHappened');
 const isItemRefreshing = computed(
-  () => taskManager.getTask(menuProps.item.Id || '') !== undefined
+  () => taskManager.getTask(menuProps.item.Id ?? '') !== undefined
 );
 const itemDeletionName = computed(() => {
   const parentName = menuProps.item.Name ?? undefined;
@@ -180,29 +181,29 @@ const itemDeletionName = computed(() => {
  * Playback related actions
  */
 const playNextAction = {
-  title: t('playback.playNext'),
+  title: t('playNext'),
   icon: IMdiPlaySpeed,
   action: async (): Promise<void> => {
     await playbackManager.playNext(menuProps.item);
-    useSnackbar(t('snackbar.playNext'), 'success');
+    useSnackbar(t('playNext'), 'success');
   }
 };
 const pushToTopOfQueueAction = {
-  title: t('itemMenu.pushToTop'),
+  title: t('pushToTop'),
   icon: IMdiArrowExpandUp,
   action: (): void => {
     playbackManager.changeItemPosition(menuProps.item.Id, 0);
   }
 };
 const removeFromQueueAction = {
-  title: t('itemMenu.removeFromQueue'),
+  title: t('removeFromQueue'),
   icon: IMdiPlaylistMinus,
   action: (): void => {
     playbackManager.removeFromQueue(menuProps.item.Id || '');
   }
 };
 const pushToBottomOfQueueAction = {
-  title: t('itemMenu.pushToBottom'),
+  title: t('pushToBottom'),
   icon: IMdiArrowExpandDown,
   action: (): void => {
     playbackManager.changeItemPosition(
@@ -221,7 +222,7 @@ const playFromBeginningAction = {
   }
 };
 const shuffleAction = {
-  title: t('playback.shuffle'),
+  title: t('shuffle'),
   icon: IMdiShuffle,
   action: async (): Promise<void> => {
     await playbackManager.play({
@@ -232,11 +233,11 @@ const shuffleAction = {
   }
 };
 const addToQueueAction = {
-  title: t('playback.addToQueue'),
+  title: t('addToQueue'),
   icon: IMdiPlaylistPlus,
   action: async (): Promise<void> => {
     await playbackManager.addToQueue(menuProps.item);
-    useSnackbar(t('snackbar.addedToQueue'), 'success');
+    useSnackbar(t('addedToQueue'), 'success');
   }
 };
 const instantMixAction = {
@@ -289,9 +290,7 @@ const deleteItemAction = {
         }
 
         try {
-          await remote.sdk.newUserApi(getLibraryApi).deleteItem({
-            itemId: itemId.value
-          });
+          await apiStore.itemDelete(itemId.value);
 
           if (itemId.value === menuProps.item.Id && route.fullPath.includes(itemId.value)) {
             await router.replace('/');
@@ -363,7 +362,7 @@ const copyDownloadURLAction = {
       };
 
       if (text) {
-        await (typeof streamUrls === 'string'
+        await (isStr(streamUrls)
           ? copyAction(text)
           : useConfirmDialog(async () => await copyAction(text), {
             title: t('copyPrompt'),
@@ -445,7 +444,6 @@ function getPlaybackOptions(): MenuOption[] {
  */
 function getCopyOptions(): MenuOption[] {
   const copyActions: MenuOption[] = [];
-  const remote = useRemote();
 
   if (remote.auth.currentUser?.Policy?.EnableContentDownloading) {
     copyActions.push(copyDownloadURLAction);

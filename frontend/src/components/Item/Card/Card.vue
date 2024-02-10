@@ -81,22 +81,22 @@
 </template>
 
 <script lang="ts">
-import { computed } from 'vue';
-import { isNil } from 'lodash-es';
-import { useMediaQuery } from '@vueuse/core';
 import {
-  BaseItemDto,
   BaseItemKind,
-  ImageType
+  ImageType,
+  type BaseItemDto
 } from '@jellyfin/sdk/lib/generated-client';
+import { useMediaQuery } from '@vueuse/core';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { isNil } from '@/utils/validation';
 import {
   CardShapes,
-  getShapeFromItemType,
+  canPlay,
   getItemDetailsLink,
-  canPlay
+  getShapeFromItemType
 } from '@/utils/items';
-import { taskManagerStore } from '@/store';
+import { taskManager } from '@/store/taskManager';
 
 /**
  * SHARED STATE ACROSS ALL THE COMPONENT INSTANCES
@@ -125,7 +125,6 @@ const props = withDefaults(
   }
 );
 
-const taskManager = taskManagerStore();
 const { t } = useI18n();
 
 const cardType = computed(() => getShapeFromItemType(props.item.Type));

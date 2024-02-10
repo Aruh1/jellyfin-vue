@@ -30,7 +30,7 @@
       @click="playOrResume">
       {{
         shuffle
-          ? $t('playback.shuffle')
+          ? $t('shuffle')
           : canResume(item)
             ? $t('resume')
             : $t('play')
@@ -40,10 +40,10 @@
 </template>
 
 <script setup lang="ts">
-import { BaseItemDto } from '@jellyfin/sdk/lib/generated-client';
+import type { BaseItemDto } from '@jellyfin/sdk/lib/generated-client';
 import { ref } from 'vue';
-import { playbackManagerStore } from '@/store';
-import { canResume, canPlay } from '@/utils/items';
+import { playbackManager } from '@/store/playbackManager';
+import { canPlay, canResume } from '@/utils/items';
 import { ticksToMs } from '@/utils/time';
 
 const props = withDefaults(
@@ -69,8 +69,6 @@ const props = withDefaults(
     mediaSourceIndex: undefined
   }
 );
-
-const playbackManager = playbackManagerStore();
 
 const loading = ref(false);
 

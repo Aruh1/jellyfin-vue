@@ -15,7 +15,7 @@
           class="pr-0 pl-0"
           scope="col" />
         <th scope="col">
-          {{ $t('item.tracklist.title') }}
+          {{ $t('title') }}
         </th>
         <th
           style="width: 6.5em"
@@ -47,7 +47,7 @@
         <template
           v-for="track in tracksOnDisc"
           :key="track.Id">
-          <VHover v-slot="{ isHovering, props: hoverProps }">
+          <JHover v-slot="{ isHovering, hoverProps }">
             <tr
               :class="{ 'text-primary': isPlaying(track) }"
               v-bind="hoverProps"
@@ -108,7 +108,7 @@
                 {{ formatTicks(track.RunTimeTicks || 0) }}
               </td>
             </tr>
-          </VHover>
+          </JHover>
         </template>
       </template>
     </tbody>
@@ -116,44 +116,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { groupBy } from 'lodash-es';
 import {
-  BaseItemDto,
-  ItemFields,
-  SortOrder
+  SortOrder,
+  type BaseItemDto
 } from '@jellyfin/sdk/lib/generated-client';
 import { getItemsApi } from '@jellyfin/sdk/lib/utils/api/items-api';
+import { groupBy } from 'lodash-es';
+import { computed } from 'vue';
+import { useBaseItem } from '@/composables/apis';
+import { playbackManager } from '@/store/playbackManager';
 import { getItemDetailsLink } from '@/utils/items';
 import { formatTicks } from '@/utils/time';
-import { playbackManagerStore } from '@/store';
-import { useRemote } from '@/composables';
 
-const props = defineProps<{ item: BaseItemDto }>();
+const props = defineProps<{
+  item: BaseItemDto
+}>();
 
-const playbackManager = playbackManagerStore();
-const remote = useRemote();
-const tracks = ref<BaseItemDto[] | null | undefined>();
-
-/**
- * Fetch component data
- */
-async function fetch(): Promise<void> {
-  tracks.value = (
-    await remote.sdk.newUserApi(getItemsApi).getItems({
-      userId: remote.auth.currentUserId ?? '',
-      parentId: props.item.Id,
-      sortBy: ['SortName'],
-      sortOrder: [SortOrder.Ascending],
-      fields: [ItemFields.MediaSources]
-    })
-  ).data.Items;
-}
-
-await fetch();
-watch(props, async () => {
-  await fetch();
-});
+const { data: tracks } = await useBaseItem(getItemsApi, 'getItems')(() => ({
+  parentId: props.item.Id,
+  sortBy: ['SortName'],
+  sortOrder: [SortOrder.Ascending]
+}));
 
 const tracksPerDisc = computed(() => {
   return groupBy(tracks.value, 'ParentIndexNumber');
